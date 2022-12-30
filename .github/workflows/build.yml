@@ -10,10 +10,10 @@ jobs:
     strategy:
       matrix:
         job:
-          - { target: x86_64-unknown-linux-gnu, archive: x86_64-unknown-linux-gnu.tar.gz, os: ubuntu-latest, cross: false }
-          - { target: x86_64-apple-darwin, archive: x86_64-apple-darwin.tar.gz, os: macos-latest, cross: false }
-          - { target: aarch64-apple-darwin, archive: aarch64-apple-darwin.tar.gz, os: macos-latest, cross: false }
-          - { target: x86_64-pc-windows-msvc, archive: x86_64-pc-windows-msvc.zip, os: windows-2019, cross: false }
+          - { target: x86_64-unknown-linux-gnu, archive: tar.gz, os: ubuntu-latest, cross: false }
+          - { target: x86_64-apple-darwin, archive: tar.gz, os: macos-latest, cross: false }
+          - { target: aarch64-apple-darwin, archive: tar.gz, os: macos-latest, cross: false }
+          - { target: x86_64-pc-windows-msvc, archive: zip, os: windows-2019, cross: false }
     runs-on: ${{ matrix.job.os }}
     steps:
       - name: Checkout
@@ -39,15 +39,15 @@ jobs:
         run: |
           rm target/${{ matrix.job.target }}/release/colmsg.d
           cp target/${{ matrix.job.target }}/release/colmsg* colmsg.exe
-          zip colmsg-${{ matrix.job.archive }} colmsg.exe
+          Compress-Archive colmsg.exe colmsg-${{ matrix.job.target }}.${{ matrix.job.archive }}
       - name: TAR Archive for Other OS
         if: ${{ matrix.job.target != 'x86_64-pc-windows-msvc' }}
         run: |
           rm target/${{ matrix.job.target }}/release/colmsg.d
           cp target/${{ matrix.job.target }}/release/colmsg* colmsg
-          tar zcf colmsg-${{ matrix.job.archive }} colmsg
+          tar zcf colmsg-${{ matrix.job.target }}.${{ matrix.job.archive }} colmsg
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
           name: colmsg.zip
-          path: colmsg-${{ matrix.job.archive }}
+          path: colmsg-${{ matrix.job.target }}.${{ matrix.job.archive }}
