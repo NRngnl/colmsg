@@ -10,10 +10,10 @@ jobs:
     strategy:
       matrix:
         job:
-          - { target: x86_64-unknown-linux-gnu, exe: x86_64-unknown-linux-gnu, os: ubuntu-latest, cross: false }
-          - { target: x86_64-apple-darwin, exe: x86_64-apple-darwin, os: macos-latest, cross: false }
-          - { target: aarch64-apple-darwin, exe: aarch64-apple-darwin, os: macos-latest, cross: false }
-          - { target: x86_64-pc-windows-msvc, exe: x86_64-pc-windows-msvc.exe, os: windows-2019, cross: false }
+          - { target: x86_64-unknown-linux-gnu, archive: x86_64-unknown-linux-gnu.tar.gz, os: ubuntu-latest, cross: false }
+          - { target: x86_64-apple-darwin, archive: x86_64-apple-darwin.tar.gz, os: macos-latest, cross: false }
+          - { target: aarch64-apple-darwin, archive: aarch64-apple-darwin.tar.gz, os: macos-latest, cross: false }
+          - { target: x86_64-pc-windows-msvc, archive: x86_64-pc-windows-msvc.zip, os: windows-2019, cross: false }
     runs-on: ${{ matrix.job.os }}
     steps:
       - name: Checkout
@@ -34,13 +34,20 @@ jobs:
           args: --release --target=${{ matrix.job.target }} --locked
           command: build
 
-      - name: Rename
+      - name: ZIP Archive for Windows
+        if: ${{ matrix.job.target == 'x86_64-pc-windows-msvc' }}
         run: |
           rm target/${{ matrix.job.target }}/release/colmsg.d
-          cp target/${{ matrix.job.target }}/release/colmsg* colmsg-${{ matrix.job.exe }}
-
-      - name: Upload release
+          cp target/${{ matrix.job.target }}/release/colmsg* colmsg.exe
+          zip colmsg-${{ matrix.job.archive }} colmsg.exe
+      - name: TAR Archive for Other OS
+        if: ${{ matrix.job.target != 'x86_64-pc-windows-msvc' }}
+        run: |
+          rm target/${{ matrix.job.target }}/release/colmsg.d
+          cp target/${{ matrix.job.target }}/release/colmsg* colmsg
+          tar zcf colmsg-${{ matrix.job.archive }} colmsg
+      - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: colmsg
-          path: colmsg-${{ matrix.job.exe }}
+          name: colmsg.zip
+          path: colmsg-${{ matrix.job.archive }}
